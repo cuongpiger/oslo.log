@@ -10,12 +10,11 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+import asyncio
 import inspect
 import logging
 import logging.config
 import logging.handlers
-import concurrent.futures
 import os
 import pymsteams
 
@@ -27,7 +26,6 @@ try:
     import syslog
 except ImportError:
     syslog = None
-
 
 NullHandler = logging.NullHandler
 
@@ -75,7 +73,6 @@ class OSSysLogHandler(logging.Handler):
 
 
 class OSJournalHandler(logging.Handler):
-
     custom_fields = (
         'project_name',
         'project_id',
@@ -176,13 +173,11 @@ class MSTeamsHandler(logging.Handler):
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            # Submit the task to the executor
-            executor.submit(self._emit(record))
+        asyncio.run(self._emit(record))
 
-    def _emit(self, record):
+    async def _emit(self, record):
         webhook = pymsteams.connectorcard(self.teams_webhook_url)
-        webhook.title(f"{record.levelname} - {record.filename}")
+        webhook.title(f"{record.levelname} - {record.processName}")
         cluster_sec = pymsteams.cardsection()
         cluster_sec.title("Log information:")
         cluster_sec.text(f"```bash\n{record.getMessage()}\n```")
