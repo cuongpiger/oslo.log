@@ -154,3 +154,53 @@ class ColorHandler(logging.StreamHandler):
         record.color = self.LEVEL_COLORS[record.levelno]
         record.reset_color = '\033[00m'
         return logging.StreamHandler.format(self, record) + record.reset_color
+
+
+class MSTeamsHandler(logging.Handler):
+    """Log handler that sends notifications to Microsoft Teams.
+
+    To use, include a '%(teams_webhook_url)s' entry in the
+    logging_context_format_string.
+    """
+
+    def __init__(self, teams_webhook_url=None, *args, **kwargs):
+        logging.Handler.__init__(self, *args, **kwargs)
+        self.teams_webhook_url = teams_webhook_url
+
+    def emit(self, record):
+        import requests
+        import json
+
+        # Set the teams message
+        teams_message = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0072C6",
+            "summary": "OpenStack Logging Notification",
+            "sections": [{
+                "activityTitle": "OpenStack Logging Notification",
+                "activitySubtitle": record.levelname,
+                "activityImage": "https://raw.githubusercontent.com/openstack/"
+                                 "horizon/master/openstack_dashboard/static/"
+                                 "dashboard/img/logo-splash.png",
+                "facts": [{
+                    "name": "Logger Name",
+                    "value": record.name
+                }, {
+                    "name": "Log Level",
+                    "value": record.levelname
+                }, {
+                    "name": "Log Message",
+                    "value": record.getMessage()
+                }],
+                "markdown": True
+            }]
+        }
+
+        # Send the teams message
+        try:
+            requests.post(self.teams_webhook_url,
+                          data=json.dumps(teams_message),
+                          headers={'Content-Type': 'application/json'})
+        except Exception:
+            self.handleError(record)

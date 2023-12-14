@@ -165,7 +165,7 @@ log_opts = [
                     'Used by oslo_log.formatters.ContextFormatter'),
     cfg.StrOpt('logging_exception_prefix',
                default='%(asctime)s.%(msecs)03d %(process)d ERROR %(name)s '
-               '%(instance)s',
+                       '%(instance)s',
                help='Prefix each line of exception output with this format. '
                     'Used by oslo_log.formatters.ContextFormatter'),
     cfg.StrOpt('logging_user_identity_format',
@@ -208,6 +208,7 @@ log_opts = [
                     'greater or equal to rate_limit_except_level are not '
                     'filtered. An empty string means that all levels are '
                     'filtered.'),
+    cfg.StrOpt("alarm_url", default=None, help="The url to send alarm messages"),
 ]
 
 

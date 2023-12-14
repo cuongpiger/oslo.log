@@ -34,6 +34,9 @@ import logging.handlers
 import os
 import platform
 import sys
+
+import oslo_log.handlers
+
 try:
     import syslog
 except ImportError:
@@ -104,7 +107,6 @@ def _iter_loggers():
 
 
 class BaseLoggerAdapter(logging.LoggerAdapter):
-
     warn = logging.LoggerAdapter.warning
 
     @property
@@ -200,11 +202,11 @@ def _create_logging_excepthook(product_name):
     def logging_excepthook(exc_type, value, tb):
         extra = {'exc_info': (exc_type, value, tb)}
         getLogger(product_name).critical('Unhandled error', **extra)
+
     return logging_excepthook
 
 
 class LogConfigError(Exception):
-
     message = _('Error loading logging config %(log_config)s: %(err_msg)s')
 
     def __init__(self, log_config, err_msg):
@@ -432,6 +434,11 @@ def _setup_logging_from_conf(conf, project, version):
             logging.ERROR)
         log_root.addHandler(handler)
 
+    if conf.alarm_url:
+        handler = _get_alarm_driver(conf.alarm_url, logging.ERROR)
+        if handler:
+            log_root.addHandler(handler)
+
     if conf.use_syslog:
         if syslog is None:
             raise RuntimeError("syslog is not available on this platform")
@@ -523,3 +530,11 @@ def get_default_log_levels():
 def is_debug_enabled(conf):
     """Determine if debug logging mode is enabled."""
     return conf.debug
+
+
+def _get_alarm_driver(url: str, *args, **kwargs):
+    url = url.strip()
+    if url[:11] == "ms-teams://":
+        return handlers.MSTeamsHandler(teams_webhook_url=url[11:], *args, **kwargs)
+
+    return None
