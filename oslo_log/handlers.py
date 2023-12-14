@@ -164,8 +164,13 @@ class MSTeamsHandler(logging.Handler):
     """
 
     def __init__(self, *args, **kwargs):
-        logging.Handler.__init__(self, *args, **kwargs)
         teams_webhook_url = kwargs.get('teams_webhook_url')
+
+        # delete the teams_webhook_url from kwargs so it doesn't get passed to logging.Handler.__init__
+        if 'teams_webhook_url' in kwargs:
+            del kwargs['teams_webhook_url']
+
+        logging.Handler.__init__(self, *args, **kwargs)
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
