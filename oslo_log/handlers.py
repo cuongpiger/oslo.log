@@ -15,6 +15,7 @@ import inspect
 import logging
 import logging.config
 import logging.handlers
+import concurrent.futures
 import os
 import pymsteams
 
@@ -175,8 +176,13 @@ class MSTeamsHandler(logging.Handler):
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the task to the executor
+            executor.submit(self._emit(record))
+
+    def _emit(self, record):
         webhook = pymsteams.connectorcard(self.teams_webhook_url)
-        webhook.title(f"{record.levelname} - {record.processName}")
+        webhook.title(f"{record.levelname} - {record.filename}")
         cluster_sec = pymsteams.cardsection()
         cluster_sec.title("Log information:")
         cluster_sec.text(f"```bash\n{record.getMessage()}\n```")
