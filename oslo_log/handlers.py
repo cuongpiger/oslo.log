@@ -175,7 +175,6 @@ class MSTeamsHandler(logging.Handler):
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
-
         webhook = pymsteams.connectorcard(self.teams_webhook_url)
         webhook.title(f"{record.levelname} - {record.processName}")
         cluster_sec = pymsteams.cardsection()
@@ -183,5 +182,4 @@ class MSTeamsHandler(logging.Handler):
         cluster_sec.text(f"```bash\n{record.getMessage()}\n```")
         webhook.addSection(cluster_sec)
         webhook.text(f"**Reference:** `{record.name}.{record.funcName}:{record.lineno}`")
-        webhook.text(f"**Filename:** `{record.filename}`")
         webhook.send()
