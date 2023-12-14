@@ -163,8 +163,9 @@ class MSTeamsHandler(logging.Handler):
     logging_context_format_string.
     """
 
-    def __init__(self, teams_webhook_url=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         logging.Handler.__init__(self, *args, **kwargs)
+        teams_webhook_url = kwargs.get('teams_webhook_url')
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
