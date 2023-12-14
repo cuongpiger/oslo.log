@@ -177,7 +177,7 @@ class MSTeamsHandler(logging.Handler):
 
     async def _emit(self, record):
         webhook = pymsteams.connectorcard(self.teams_webhook_url)
-        webhook.title(f"{record.levelname} - {record.processName}")
+        webhook.title(f"{record.levelname} - {record.filename}")
         cluster_sec = pymsteams.cardsection()
         cluster_sec.title("Log information:")
         cluster_sec.text(f"```bash\n{record.getMessage()}\n```")
