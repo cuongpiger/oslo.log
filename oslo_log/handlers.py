@@ -16,6 +16,7 @@ import logging
 import logging.config
 import logging.handlers
 import os
+import pymsteams
 
 try:
     from systemd import journal
@@ -174,39 +175,13 @@ class MSTeamsHandler(logging.Handler):
         self.teams_webhook_url = teams_webhook_url
 
     def emit(self, record):
-        import requests
-        import json
 
-        # Set the teams message
-        teams_message = {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "themeColor": "0072C6",
-            "summary": "OpenStack Logging Notification",
-            "sections": [{
-                "activityTitle": "OpenStack Logging Notification",
-                "activitySubtitle": record.levelname,
-                "activityImage": "https://raw.githubusercontent.com/openstack/"
-                                 "horizon/master/openstack_dashboard/static/"
-                                 "dashboard/img/logo-splash.png",
-                "facts": [{
-                    "name": "Logger Name",
-                    "value": record.name
-                }, {
-                    "name": "Log Level",
-                    "value": record.levelname
-                }, {
-                    "name": "Log Message",
-                    "value": record.getMessage()
-                }],
-                "markdown": True
-            }]
-        }
-
-        # Send the teams message
-        try:
-            requests.post(self.teams_webhook_url,
-                          data=json.dumps(teams_message),
-                          headers={'Content-Type': 'application/json'})
-        except Exception:
-            self.handleError(record)
+        webhook = pymsteams.connectorcard(self.teams_webhook_url)
+        webhook.title(f"{record.levelname} - {record.processName}")
+        cluster_sec = pymsteams.cardsection()
+        cluster_sec.title("Log information:")
+        cluster_sec.text(f"```bash\n{record.getMessage()}\n```")
+        webhook.addSection(cluster_sec)
+        webhook.text(f"**Reference:** `{record.name}.{record.funcName}:{record.lineno}`")
+        webhook.text(f"**Filename:** `{record.filename}`")
+        webhook.send()
